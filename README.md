@@ -18,7 +18,7 @@ Note:
 
 2. As MWAA will need to start run Glue jobs, the policy in the setup will need extra privilege to Glue service. 
 
-3. ```
+   ```
    {
        "Version": "2012-10-17",
        "Statement": [
@@ -39,7 +39,25 @@ Note:
    }
    ```
 
-### 2. Modify the requirements in MWAA
+### 2. Upload the requirements in MWAA
+
+```
+git clone https://github.com/yizhizoe/airflow_glue_poc.git
+cd airflow_glue_poc/
+aws s3 cp requirements.txt s3://<mwaa environment s3 bucket> --region us-east-2
+```
+
+In MWAA console, modify the environment, go to "DAG code in Amazon S3" and in "Requirements file", select the right version of the requirements file.
+
+### 3. Define the Glue jobs using CDK 
+
+### 4. Upload DAG in MWAA environment
+
+```
+aws s3 cp dags/glue_dag.py s3://<mwaa environment s3 bucket>/dags --region us-east-2
+```
+
+### 5. Launch DAG in Airflow UI
 
 
 
