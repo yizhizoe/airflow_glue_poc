@@ -53,11 +53,19 @@ In MWAA console, modify the environment, go to "DAG code in Amazon S3" and in "R
 
 ### 4. Upload DAG in MWAA environment
 
+As the current Glue operator for Airflow doesn't support Glue 2.0 job natively, we use AwsBaseHook as workaround to start the job. The customized Python operator in the code also manages the job completion status.
+
 ```
-aws s3 cp dags/glue_dag.py s3://<mwaa environment s3 bucket>/dags --region us-east-2
+aws s3 cp dags/glue_dag.py s3://<mwaa environment s3 bucket>/dags/ --region us-east-2
 ```
 
-### 5. Launch DAG in Airflow UI
+### 5. Turn on DAG and trigger DAG in Airflow UI
+
+Note that in order to find the underlying Glue Run ID, select the task instance and go to "View Logs". The Run ID is logged in the task instance log.
+
+![job_runID](img/job_runID.png)
+
+
 
 
 
