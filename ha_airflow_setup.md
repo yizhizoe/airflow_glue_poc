@@ -121,26 +121,25 @@
 
    - ##### Create security group for both EC2
 
-     Ingress will allow only for ALB
+     Inbound will allow only for ALB Security group later
 
    - ##### Create EC2 in the private subnet
 
-   - ##### Mount EFS file share for DAG
+     On AWS Management Console, launch EC2 (with AMI Amazon Linux2 as an example) and attach file system to /airflow. This will create user data to add the file system to /etc/fstab so that the EFS file system will be automatically remounted in EC2 instance reboots.
 
-     ```bash
-     mkdir /airflow
-     sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport <AF_FS_ID DNS name>:/ /airflow
-     # copy the DAG files to /airflow/dags/
-     ```
+     ![](img/mount_efs.png)
 
-     Airflow installation
+   - ##### Airflow installation
 
      ```bash
      sudo yum install -y python37
      export AIRFLOW_HOME=~/airflow
      AIRFLOW_VERSION=2.0.2
-     pip3 install "apache-airflow==${AIRFLOW_VERSION}" --constraint "${CONSTRAINT_URL}"
-     pip3 install 'apache-airflow[celery]' 'celery[redis]' celery[sqlalchemy] psycopg2-binary
+     PYTHON_VERSION="$(python3 --version | cut -d " " -f 2 | cut -d "." -f 1-2)"
+     CONSTRAINT_URL="https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PYTHON_VERSION}.txt"
+     sudo pip3 install --upgrade pip==20.2.4
+     pip install "apache-airflow==${AIRFLOW_VERSION}" --constraint "${CONSTRAINT_URL}"
+     pip install 'apache-airflow[celery]' 'celery[redis]'==4.4.2 psycopg2-binary apache-airflow-providers-amazon
      PATH=$PATH:~/.local/bin
      airflow db init #this will fail but creates the airflow.cfg in AIRFLOW_HOME directory
      ```
@@ -171,6 +170,17 @@
 
 5. #### ALB setup
 
+   Create internal ALB with listener on HTTP
 
+   - Port forward 80->8080
+   - The target group will register the 2 EC2 instances
+   - Health check on /health
+   - Security group inbound for port 80 from internal CIDR
+
+### Test Result
+
+The Airflow service can be accessed thru the ALB domain name. 
+
+While the DAG is running, stopping one of the EC2 instances will have the impact of failing some tasks. But as the tasks will be retried on the workers on the other instance, the DAG will resume.  
 
 ![](img/dag_efs.png)
